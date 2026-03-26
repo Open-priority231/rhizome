@@ -50,12 +50,26 @@ def _configure_logging(verbose: bool) -> None:
 @app.command()
 def run(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug logging"),
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        "-y",
+        help="Skip confirmation prompt and auto-confirm backup (for CI / scripted usage)",
+    ),
 ) -> None:
-    """Execute the full semantic linking pipeline."""
+    """
+    Execute the full semantic linking pipeline.
+
+    By default, a dry-run preview is shown first and explicit confirmation is
+    required before any file is written.  Pass --yes / -y to skip all prompts
+    (useful in CI or scripted environments).
+
+    Set DRY_RUN=true to preview proposed links without writing anything at all.
+    """
     _configure_logging(verbose)
 
     from rhizome.config import load_settings
-    from rhizome.pipeline import run_pipeline
+    from rhizome.pipeline import preview_pipeline, run_pipeline
     from rhizome.vault import discover_notes
 
     try:
@@ -70,12 +84,41 @@ def run(
         f"top_k={settings.top_k}, dry_run={settings.dry_run}"
     )
 
-    # --- Backup prompt -------------------------------------------------------
-    # Skip entirely in dry-run mode — no files will be modified anyway.
-    backup_confirmed = False
-    if not settings.dry_run:
+    # --- DRY_RUN=true: legacy behaviour — preview only, no writes, no prompt --
+    if settings.dry_run:
+        try:
+            run_pipeline(settings, backup_confirmed=False)
+        except Exception as exc:
+            logger.exception(f"Pipeline failed: {exc}")
+            raise typer.Exit(code=1) from exc
+        return
+
+    # --- Preview pass --------------------------------------------------------
+    logger.info("Running preview …")
+    try:
+        preview = preview_pipeline(settings)
+    except Exception as exc:
+        logger.exception(f"Preview failed: {exc}")
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(f"\n  Notes to modify  : {preview['notes_to_modify']}")
+    typer.echo(f"  Links to write   : {preview['link_count']}")
+    typer.echo("  (A timestamped backup will be created before writing.)")
+    typer.echo("")
+
+    # --- Confirmation --------------------------------------------------------
+    if yes:
+        # Non-interactive mode: proceed and auto-confirm backup.
+        backup_confirmed = True
+    else:
+        confirmed = typer.confirm("  Proceed?", default=True)
+        typer.echo("")
+        if not confirmed:
+            typer.echo("Aborted.")
+            raise typer.Exit()
+
         note_paths = discover_notes(settings.vault_path)
-        typer.echo(f"\n  Vault path  : {settings.vault_path}")
+        typer.echo(f"  Vault path  : {settings.vault_path}")
         typer.echo(f"  Notes found : {len(note_paths)}")
         backup_confirmed = typer.confirm(
             "  Do you want to create a backup before proceeding?",

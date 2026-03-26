@@ -77,13 +77,17 @@ rhizome status
 rhizome run
 ```
 
-On first run you will be asked:
+On first run, rhizome performs a dry-run preview and asks for confirmation:
 
 ```
-  Vault path  : /home/you/notes
-  Notes found : 312
-  Do you want to create a backup before proceeding? [Y/n]:
+  Notes to modify  : 47
+  Links to write   : 214
+  (A timestamped backup will be created before writing.)
+
+  Proceed? [Y/n]:
 ```
+
+If you confirm, you will also be asked whether to create a backup before writing.
 
 The backup is written to `{vault}/../.rhizome_backups/backup_YYYYMMDD_HHMMSS/`
 and can be restored interactively with `rhizome restore`.
@@ -110,7 +114,8 @@ All settings are read from environment variables or a `.env` file.
 ## CLI reference
 
 ```
-rhizome run              Execute the full pipeline
+rhizome run              Execute the full pipeline (dry-run preview + confirmation)
+rhizome run --yes        Skip confirmation and auto-confirm backup (CI / scripted)
 rhizome status           Show vault stats and model cache status
 rhizome clean            Remove all generated ## Related Notes sections
 rhizome download-model   Pre-cache the ONNX model (useful for CI / Docker)
@@ -148,11 +153,20 @@ Prints one debug line per modified note showing the note title and the links tha
 
 ### Dry run
 
+`rhizome run` always shows a dry-run preview before writing.  Confirm at the
+prompt to proceed, or press `n` (or Ctrl-C) to abort without touching any file.
+
+For fully non-interactive execution (CI / scripts):
+
+```bash
+rhizome run --yes        # skip all prompts, auto-confirm backup
+```
+
+To preview proposed links without writing anything at all (no prompt):
+
 ```bash
 DRY_RUN=true rhizome run
 ```
-
-Logs every proposed link without writing to disk. Safe to run at any time.
 
 ### Pre-caching the model
 

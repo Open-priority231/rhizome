@@ -146,6 +146,45 @@ def _write_run_log(
         logger.warning(f"Could not write run log: {exc}")
 
 
+def preview_pipeline(
+    settings: Settings,
+    strategy: SimilarityStrategy | None = None,
+) -> dict:
+    """
+    Dry-run pass: compute what run_pipeline would do without writing anything.
+
+    Returns:
+        note_count       -- total notes discovered
+        notes_to_modify  -- notes that would receive a Related Notes section
+        link_count       -- total wikilinks that would be written
+    """
+    md_paths = discover_notes(settings.vault_path)
+    if not md_paths:
+        return {"note_count": 0, "notes_to_modify": 0, "link_count": 0}
+
+    notes = parse_notes(md_paths)
+    if not notes:
+        return {"note_count": 0, "notes_to_modify": 0, "link_count": 0}
+
+    model = get_model(settings.model_dir, settings.model_name)
+    texts = [note.body or note.title for note in notes]
+    embeddings = model.encode(texts)
+
+    chosen_strategy = strategy or select_strategy(len(notes))
+    chosen_strategy.build(embeddings)
+    neighbours = chosen_strategy.query(
+        embeddings,
+        top_k=settings.top_k,
+        threshold=settings.similarity_threshold,
+    )
+
+    return {
+        "note_count": len(notes),
+        "notes_to_modify": sum(1 for n in neighbours if n),
+        "link_count": sum(len(n) for n in neighbours),
+    }
+
+
 def get_clean_preview(vault_path: Path) -> list[Path]:
     """Return paths of notes that contain a rhizome-managed section."""
     md_paths = discover_notes(vault_path)
