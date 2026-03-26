@@ -27,6 +27,8 @@ No cloud API, no database, no daemon — the knowledge graph lives entirely in t
 - [[How I take notes]]
 ```
 
+![Rhizome interface demo](assets/demo1.png)
+
 ---
 
 ## Features
