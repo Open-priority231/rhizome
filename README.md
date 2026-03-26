@@ -32,7 +32,7 @@ No cloud API, no database, no daemon — the knowledge graph lives entirely in t
 ## Features
 
 - **Fully local** — ONNX Runtime on CPU, no GPU or network call after first run
-- **Multilingual** — `paraphrase-multilingual-MiniLM-L12-v2` handles 50+ languages
+- **Multilingual** — default model handles 50+ languages; swap to any Xenova ONNX export via `MODEL_NAME`
 - **Scales automatically** — exact numpy search for small vaults, approximate HNSW for large ones
 - **Idempotent** — re-running the pipeline replaces the section, never duplicates it
 - **Safe by default** — prompts for a timestamped vault backup before writing anything
@@ -109,6 +109,35 @@ All settings are read from environment variables or a `.env` file.
 | `LOG_DIR`              | `./logs`                                         | Directory where per-run JSON logs are written        |
 | `DRY_RUN`              | `false`                                          | Preview proposed links without modifying any files   |
 | `EXCLUDE_DIRS`         | *(empty)*                                        | Comma-separated list of directories (relative to `VAULT_PATH`) to skip. Uses prefix matching: `journal` excludes `vault/journal/` but not `vault/project/journal/`. |
+
+---
+
+## Choosing a model
+
+The default model works well for most vaults. If your vault is entirely in one
+language, or you want a different speed/quality trade-off, you can switch to any
+compatible model by setting `MODEL_NAME`.
+
+| Model | Size | Languages | Best for |
+|-------|------|-----------|----------|
+| `Xenova/paraphrase-multilingual-MiniLM-L12-v2` | ~250 MB | 50+ | **Default** — mixed-language or unknown vault |
+| `Xenova/all-MiniLM-L6-v2` | ~90 MB | English | Fast and lean: English-only vault, low-RAM hardware |
+| `Xenova/all-MiniLM-L12-v2` | ~130 MB | English | Balanced: English vault, better recall than L6 |
+| `Xenova/all-mpnet-base-v2` | ~430 MB | English | High precision: English vault where quality matters most |
+| `Xenova/paraphrase-multilingual-mpnet-base-v2` | ~1.1 GB | 50+ | Best multilingual quality, if disk space allows |
+
+> **When you change `MODEL_NAME`, delete `MODEL_DIR` first.**
+> Embeddings from different models are not comparable — mixing them produces
+> meaningless similarity scores.
+
+```bash
+# Example: switch to a leaner English-only model
+MODEL_NAME=Xenova/all-MiniLM-L6-v2
+MODEL_DIR=./models   # delete contents of this directory first
+```
+
+See [docs/models.md](docs/models.md) for a detailed comparison, a decision guide,
+and notes on compatibility requirements.
 
 ---
 
@@ -209,8 +238,8 @@ is cached separately from the application code.
 
 ## How it works
 
-See [docs/architecture.md](docs/architecture.md) for a walkthrough of the pipeline,
-including the embedding strategy, similarity backends, and section writing logic.
+- [docs/architecture.md](docs/architecture.md) — pipeline walkthrough: embedding strategy, similarity backends, section writing logic
+- [docs/models.md](docs/models.md) — model selection guide: compatibility, comparison table, decision criteria, switching instructions
 
 ---
 
