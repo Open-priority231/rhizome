@@ -4,9 +4,8 @@ dry-run flow and the --yes / -y flag.
 """
 
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from rhizome.cli.commands import app

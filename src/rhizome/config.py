@@ -63,12 +63,12 @@ class Settings(BaseSettings):
                 return _THRESHOLD_LEVELS[lowered]
             try:
                 return float(lowered)
-            except ValueError:
+            except ValueError as err:
                 valid_levels = ", ".join(f'"{k}"' for k in _THRESHOLD_LEVELS)
                 raise ValueError(
                     f"SIMILARITY_THRESHOLD must be one of {valid_levels}, "
                     f"or a float in [0, 1]. Got: {v!r}"
-                )
+                ) from err
         return v  # let pydantic coerce numeric types
 
     @field_validator("similarity_threshold")

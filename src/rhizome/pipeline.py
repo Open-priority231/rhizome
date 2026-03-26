@@ -16,7 +16,13 @@ from loguru import logger
 from .config import Settings
 from .inference.model import get_model
 from .inference.similarity import SimilarityStrategy, select_strategy
-from .vault import count_managed_links, discover_notes, has_managed_section, parse_notes, write_related_notes
+from .vault import (
+    count_managed_links,
+    discover_notes,
+    has_managed_section,
+    parse_notes,
+    write_related_notes,
+)
 from .vault.backup import create_backup
 from .vault.obsidian import remove_related_section
 
