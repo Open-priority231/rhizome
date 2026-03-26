@@ -16,7 +16,7 @@ from loguru import logger
 from .config import Settings
 from .inference.model import get_model
 from .inference.similarity import SimilarityStrategy, select_strategy
-from .vault import discover_notes, has_managed_section, parse_notes, write_related_notes
+from .vault import count_managed_links, discover_notes, has_managed_section, parse_notes, write_related_notes
 from .vault.backup import create_backup
 from .vault.obsidian import remove_related_section
 
@@ -200,6 +200,60 @@ def run_clean(vault_path: Path) -> None:
     md_paths = discover_notes(vault_path)
     removed = sum(1 for p in md_paths if remove_related_section(p))
     logger.success(f"Removed 'Related Notes' sections from {removed} notes")
+
+
+def audit_vault(
+    settings: Settings,
+    strategy: SimilarityStrategy | None = None,
+) -> dict:
+    """
+    Analyze vault connectivity without modifying any file.
+
+    Returns:
+        note_count         -- total notes discovered
+        connection_buckets -- {label: count} for the four connectivity bands
+        potential_links    -- total wikilinks the pipeline would write
+        notes_affected     -- notes that would receive at least one link
+    """
+    md_paths = discover_notes(settings.vault_path)
+    if not md_paths:
+        return {
+            "note_count": 0,
+            "connection_buckets": {"none": 0, "1-2": 0, "3-5": 0, "6+": 0},
+            "potential_links": 0,
+            "notes_affected": 0,
+        }
+
+    notes = parse_notes(md_paths)
+
+    # --- Existing connections per note (Related Notes section only) ----------
+    existing = [count_managed_links(note) for note in notes]
+    connection_buckets = {
+        "none": sum(1 for c in existing if c == 0),
+        "1-2":  sum(1 for c in existing if 1 <= c <= 2),
+        "3-5":  sum(1 for c in existing if 3 <= c <= 5),
+        "6+":   sum(1 for c in existing if c >= 6),
+    }
+
+    # --- Potential new links (full pipeline, in-memory only) -----------------
+    model = get_model(settings.model_dir, settings.model_name)
+    texts = [note.body or note.title for note in notes]
+    embeddings = model.encode(texts)
+
+    chosen_strategy = strategy or select_strategy(len(notes))
+    chosen_strategy.build(embeddings)
+    neighbours = chosen_strategy.query(
+        embeddings,
+        top_k=settings.top_k,
+        threshold=settings.similarity_threshold,
+    )
+
+    return {
+        "note_count": len(notes),
+        "connection_buckets": connection_buckets,
+        "potential_links": sum(len(n) for n in neighbours),
+        "notes_affected": sum(1 for n in neighbours if n),
+    }
 
 
 def get_vault_stats(settings: Settings) -> dict:

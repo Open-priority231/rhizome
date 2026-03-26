@@ -168,6 +168,19 @@ def write_related_notes(note: Note, linked_titles: list[str], dry_run: bool = Fa
     logger.debug(f"Updated {note.path.name} with {len(linked_titles)} related links")
 
 
+def count_managed_links(note: Note) -> int:
+    """
+    Count [[wikilinks]] inside the managed Related Notes section of *note*.
+
+    Returns 0 if the note has no managed section.  Only the sentinel-wrapped
+    block is inspected — manual links elsewhere in the note are not counted.
+    """
+    match = _RELATED_SECTION_RE.search(note.raw)
+    if not match:
+        return 0
+    return len(_WIKILINK_RE.findall(match.group(0)))
+
+
 def has_managed_section(path: Path) -> bool:
     """
     Return True if *path* contains a rhizome-managed block (either format).

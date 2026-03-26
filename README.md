@@ -116,6 +116,7 @@ All settings are read from environment variables or a `.env` file.
 ```
 rhizome run              Execute the full pipeline (dry-run preview + confirmation)
 rhizome run --yes        Skip confirmation and auto-confirm backup (CI / scripted)
+rhizome audit            Analyze vault connectivity without modifying any file
 rhizome status           Show vault stats and model cache status
 rhizome clean            Remove all generated ## Related Notes sections
 rhizome download-model   Pre-cache the ONNX model (useful for CI / Docker)
@@ -167,6 +168,31 @@ To preview proposed links without writing anything at all (no prompt):
 ```bash
 DRY_RUN=true rhizome run
 ```
+
+### Auditing the vault
+
+```bash
+rhizome audit
+```
+
+Analyzes your vault and reports its connectivity state without modifying anything:
+
+```
+[i] Vault audit — /home/you/notes (312 notes)
+Connectivity distribution
+─────────────────────────
+No connections       :  47 notes  ( 15%)
+1–2 connections      :  83 notes  ( 27%)
+3–5 connections      :  92 notes  ( 30%)
+6+  connections      :  90 notes  ( 29%)
+Potential new links  : 214  (dry-run to preview them)
+Est. notes affected  :  98
+[i] Run `rhizome run` to generate links.
+```
+
+"Connections" counts existing `[[wikilinks]]` in the `## Related Notes` section only.
+"Potential new links" runs the full embedding + similarity pipeline in memory — no files
+are written.
 
 ### Pre-caching the model
 

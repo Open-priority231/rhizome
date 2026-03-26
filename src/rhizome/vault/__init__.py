@@ -22,6 +22,7 @@ from .obsidian import (
     RHIZOME_START,
     ObsidianVaultReader,
     build_related_section,
+    count_managed_links,
     discover_notes,
     has_managed_section,
     parse_note,
@@ -61,6 +62,7 @@ __all__ = [
     "ObsidianVaultReader",
     "get_vault_reader",
     # Re-exported helpers
+    "count_managed_links",
     "RELATED_NOTES_HEADER",
     "RHIZOME_START",
     "RHIZOME_END",

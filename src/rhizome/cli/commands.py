@@ -325,6 +325,59 @@ def restore(
 
 
 # ---------------------------------------------------------------------------
+# audit
+# ---------------------------------------------------------------------------
+
+@app.command()
+def audit(
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug logging"),
+) -> None:
+    """
+    Analyze vault connectivity without modifying any file.
+
+    Reports the distribution of existing connections and estimates how many
+    new links the pipeline would produce.
+    """
+    _configure_logging(verbose)
+
+    from rhizome.config import load_settings
+    from rhizome.pipeline import audit_vault
+
+    try:
+        settings = load_settings()
+    except Exception as exc:
+        logger.error(f"Configuration error: {exc}")
+        raise typer.Exit(code=1) from exc
+
+    try:
+        result = audit_vault(settings)
+    except Exception as exc:
+        logger.exception(f"Audit failed: {exc}")
+        raise typer.Exit(code=1) from exc
+
+    n = result["note_count"]
+    if n == 0:
+        logger.warning("No notes found — nothing to audit.")
+        return
+
+    def _pct(count: int) -> str:
+        return f"{count / n * 100:3.0f}%"
+
+    buckets = result["connection_buckets"]
+
+    logger.info(f"Vault audit — {settings.vault_path} ({n} notes)")
+    typer.echo("Connectivity distribution")
+    typer.echo("─────────────────────────")
+    typer.echo(f"No connections       : {buckets['none']:3d} notes  ({_pct(buckets['none'])})")
+    typer.echo(f"1–2 connections      : {buckets['1-2']:3d} notes  ({_pct(buckets['1-2'])})")
+    typer.echo(f"3–5 connections      : {buckets['3-5']:3d} notes  ({_pct(buckets['3-5'])})")
+    typer.echo(f"6+  connections      : {buckets['6+']:3d} notes  ({_pct(buckets['6+'])})")
+    typer.echo(f"Potential new links  : {result['potential_links']:3d}  (dry-run to preview them)")
+    typer.echo(f"Est. notes affected  : {result['notes_affected']:3d}")
+    logger.info("Run `rhizome run` to generate links.")
+
+
+# ---------------------------------------------------------------------------
 # download-model
 # ---------------------------------------------------------------------------
 
