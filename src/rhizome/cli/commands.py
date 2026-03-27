@@ -13,6 +13,7 @@ import copy
 import shutil
 import sys
 import textwrap
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -100,7 +101,15 @@ def _echo_setting_help(name: str, default: str, effect: str) -> None:
     _echo_wrapped_detail("Effect", effect)
 
 
-def _prompt_single_note_target(settings: Settings) -> Path:
+def _echo_selected_notes(settings: Settings, selected_note_paths: Sequence[Path]) -> None:
+    typer.echo("")
+    typer.echo("Selected notes")
+    typer.echo("--------------")
+    for i, path in enumerate(selected_note_paths, start=1):
+        typer.echo(f"  [{i}] {path.relative_to(settings.vault_path)}")
+
+
+def _prompt_manual_targets(settings: Settings) -> list[Path]:
     from rhizome.vault import discover_notes
 
     note_paths = discover_notes(
@@ -110,7 +119,10 @@ def _prompt_single_note_target(settings: Settings) -> Path:
         typer.echo("No notes found in the current scope.")
         raise typer.Exit(code=1)
 
+    selected_note_paths: list[Path] = []
+
     while True:
+        typer.echo("")
         query = typer.prompt("Search note filename", default="").strip()
         if not query:
             typer.echo("Please enter part of a filename or path.")
@@ -142,7 +154,24 @@ def _prompt_single_note_target(settings: Settings) -> Path:
             typer.echo(f"Invalid selection: {choice}")
             continue
 
-        return matches[index]
+        selected_path = matches[index]
+        if selected_path in selected_note_paths:
+            typer.echo(
+                "That note is already selected. Choose another one or finish the selection."
+            )
+        else:
+            selected_note_paths.append(selected_path)
+            typer.echo(
+                f"Added: {selected_path.relative_to(settings.vault_path)}"
+            )
+
+        _echo_selected_notes(settings, selected_note_paths)
+        typer.echo("")
+        if typer.confirm("Add another note?", default=False):
+            continue
+        if selected_note_paths:
+            return selected_note_paths
+        typer.echo("Select at least one note before finishing.")
 
 
 def _prompt_top_k(settings: Settings) -> Settings:
@@ -176,12 +205,24 @@ def _prompt_similarity_threshold(settings: Settings) -> Settings:
             typer.echo(f"Invalid SIMILARITY_THRESHOLD: {exc}")
 
 
-def _prompt_chunk_settings(settings: Settings) -> Settings:
+def _prompt_chunk_size(settings: Settings) -> Settings:
     _echo_setting_help(
         "CHUNK_SIZE",
         str(_RECOMMENDED_CHUNK_SIZE),
         "Lower values can help very long notes, but they increase embedding time.",
     )
+    while True:
+        raw_chunk_size = typer.prompt("CHUNK_SIZE", default=str(settings.chunk_size)).strip()
+        try:
+            return _replace_settings(
+                settings,
+                chunk_size=int(raw_chunk_size),
+            )
+        except Exception as exc:
+            typer.echo(f"Invalid CHUNK_SIZE: {exc}")
+
+
+def _prompt_chunk_overlap(settings: Settings) -> Settings:
     _echo_setting_help(
         "CHUNK_OVERLAP",
         str(_RECOMMENDED_CHUNK_OVERLAP),
@@ -189,18 +230,16 @@ def _prompt_chunk_settings(settings: Settings) -> Settings:
     )
 
     while True:
-        raw_chunk_size = typer.prompt("CHUNK_SIZE", default=str(settings.chunk_size)).strip()
         raw_chunk_overlap = typer.prompt(
             "CHUNK_OVERLAP", default=str(settings.chunk_overlap)
         ).strip()
         try:
             return _replace_settings(
                 settings,
-                chunk_size=int(raw_chunk_size),
                 chunk_overlap=int(raw_chunk_overlap),
             )
         except Exception as exc:
-            typer.echo(f"Invalid chunk settings: {exc}")
+            typer.echo(f"Invalid CHUNK_OVERLAP: {exc}")
 
 
 def _prompt_related_notes_header(current_header: str) -> str:
@@ -224,16 +263,26 @@ def _prompt_runtime_overrides(
     settings: Settings,
     related_notes_header: str,
 ) -> tuple[Settings, str]:
+    if not settings.manual_override_fields:
+        return settings, related_notes_header
+
     if not typer.confirm("Review runtime settings for this run only?", default=False):
         return settings, related_notes_header
 
     typer.echo("")
     typer.echo("Press Enter to keep the current value shown in each prompt.")
     tuned = _clone_settings(settings)
-    tuned = _prompt_top_k(tuned)
-    tuned = _prompt_similarity_threshold(tuned)
-    tuned = _prompt_chunk_settings(tuned)
-    related_notes_header = _prompt_related_notes_header(related_notes_header)
+    for field_name in settings.manual_override_fields:
+        if field_name == "top_k":
+            tuned = _prompt_top_k(tuned)
+        elif field_name == "similarity_threshold":
+            tuned = _prompt_similarity_threshold(tuned)
+        elif field_name == "chunk_size":
+            tuned = _prompt_chunk_size(tuned)
+        elif field_name == "chunk_overlap":
+            tuned = _prompt_chunk_overlap(tuned)
+        elif field_name == "related_notes_header":
+            related_notes_header = _prompt_related_notes_header(related_notes_header)
     typer.echo("")
     return tuned, related_notes_header
 
@@ -251,10 +300,18 @@ def run(
         "-y",
         help="Skip confirmation prompt and auto-confirm backup (for CI / scripted usage)",
     ),
+    manual: bool = typer.Option(
+        False,
+        "--manual",
+        help=(
+            "Interactively pick one or more notes to update while matching "
+            "against the full vault."
+        ),
+    ),
     single_note: bool = typer.Option(
         False,
         "--single-note",
-        help="Interactively pick one note to update while matching against the full vault.",
+        help="Deprecated alias for --manual.",
     ),
 ) -> None:
     """
@@ -272,10 +329,12 @@ def run(
     from rhizome.pipeline import preview_pipeline, run_pipeline
     from rhizome.vault import discover_notes
 
-    if single_note and yes:
+    manual_mode = manual or single_note
+
+    if manual_mode and yes:
         raise typer.BadParameter(
-            "--single-note cannot be used with --yes because note selection is interactive.",
-            param_hint="--single-note",
+            "--manual cannot be used with --yes because note selection is interactive.",
+            param_hint="--manual",
         )
 
     try:
@@ -284,10 +343,12 @@ def run(
         logger.error(f"Configuration error: {exc}")
         raise typer.Exit(code=1) from exc
 
-    target_note_path: Path | None = None
+    target_note_paths: list[Path] = []
     related_notes_header = RELATED_NOTES_HEADER
-    if single_note:
-        target_note_path = _prompt_single_note_target(settings)
+    if manual_mode:
+        if single_note and not manual:
+            typer.echo("Note: --single-note is deprecated; use --manual instead.")
+        target_note_paths = _prompt_manual_targets(settings)
         settings, related_notes_header = _prompt_runtime_overrides(
             settings,
             related_notes_header,
@@ -298,8 +359,10 @@ def run(
         f"Settings: threshold={settings.similarity_threshold}, "
         f"top_k={settings.top_k}, dry_run={settings.dry_run}"
     )
-    if target_note_path is not None:
-        logger.info(f"Single-note target: {target_note_path.relative_to(settings.vault_path)}")
+    if target_note_paths:
+        logger.info(
+            f"Manual targets: {len(target_note_paths)} selected"
+        )
 
     # --- DRY_RUN=true: legacy behaviour — preview only, no writes, no prompt --
     if settings.dry_run:
@@ -307,7 +370,7 @@ def run(
             run_pipeline(
                 settings,
                 backup_confirmed=False,
-                target_note_path=target_note_path,
+                target_note_paths=target_note_paths or None,
                 related_notes_header=related_notes_header,
             )
         except Exception as exc:
@@ -318,13 +381,16 @@ def run(
     # --- Preview pass --------------------------------------------------------
     logger.info("Running preview …")
     try:
-        preview = preview_pipeline(settings, target_note_path=target_note_path)
+        preview = preview_pipeline(settings, target_note_paths=target_note_paths or None)
     except Exception as exc:
         logger.exception(f"Preview failed: {exc}")
         raise typer.Exit(code=1) from exc
 
-    if target_note_path is not None:
-        typer.echo(f"\n  Target note      : {target_note_path.relative_to(settings.vault_path)}")
+    if target_note_paths:
+        typer.echo("\n  Manual targets")
+        for path in target_note_paths:
+            typer.echo(f"    - {path.relative_to(settings.vault_path)}")
+        typer.echo(f"  Notes selected   : {len(target_note_paths)}")
     typer.echo(f"\n  Notes to modify  : {preview['notes_to_modify']}")
     typer.echo(f"  Links to write   : {preview['link_count']}")
     typer.echo("  (A timestamped backup will be created before writing.)")
@@ -346,8 +412,8 @@ def run(
         )
         typer.echo(f"  Vault path  : {settings.vault_path}")
         typer.echo(f"  Notes found : {len(note_paths)}")
-        if target_note_path is not None:
-            typer.echo(f"  Target note : {target_note_path.relative_to(settings.vault_path)}")
+        if target_note_paths:
+            typer.echo(f"  Notes selected : {len(target_note_paths)}")
         backup_confirmed = typer.confirm(
             "  Do you want to create a backup before proceeding?",
             default=True,
@@ -358,7 +424,7 @@ def run(
         run_pipeline(
             settings,
             backup_confirmed=backup_confirmed,
-            target_note_path=target_note_path,
+            target_note_paths=target_note_paths or None,
             related_notes_header=related_notes_header,
         )
     except RuntimeError as exc:

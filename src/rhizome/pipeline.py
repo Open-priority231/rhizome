@@ -8,6 +8,7 @@ or pass a custom implementation without touching this file.
 """
 
 import json
+from collections.abc import Collection
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -32,7 +33,7 @@ def run_pipeline(
     settings: Settings,
     strategy: SimilarityStrategy | None = None,
     backup_confirmed: bool = False,
-    target_note_path: Path | None = None,
+    target_note_paths: Collection[Path] | None = None,
     related_notes_header: str = RELATED_NOTES_HEADER,
 ) -> None:
     """
@@ -92,15 +93,17 @@ def run_pipeline(
     modified_notes: list[dict] = []
 
     notes_to_process = notes
-    if target_note_path is not None:
+    if target_note_paths is not None:
         notes_by_path = {note.path: note for note in notes}
-        selected_note = notes_by_path.get(target_note_path)
-        if selected_note is None:
+        missing_paths = [
+            path for path in target_note_paths if path not in notes_by_path
+        ]
+        if missing_paths:
             raise ValueError(
-                "Target note is not available in the current scope: "
-                f"{target_note_path}"
+                "Selected note is not available in the current scope: "
+                f"{missing_paths[0]}"
             )
-        notes_to_process = [selected_note]
+        notes_to_process = [notes_by_path[path] for path in target_note_paths]
 
     note_index_by_path = {note.path: i for i, note in enumerate(notes)}
 
@@ -186,7 +189,7 @@ def _write_run_log(
 def preview_pipeline(
     settings: Settings,
     strategy: SimilarityStrategy | None = None,
-    target_note_path: Path | None = None,
+    target_note_paths: Collection[Path] | None = None,
 ) -> dict:
     """
     Dry-run pass: compute what run_pipeline would do without writing anything.
@@ -218,19 +221,21 @@ def preview_pipeline(
         threshold=settings.similarity_threshold,
     )
 
-    if target_note_path is not None:
+    if target_note_paths is not None:
         note_indices = {note.path: i for i, note in enumerate(notes)}
-        target_index = note_indices.get(target_note_path)
-        if target_index is None:
+        missing_paths = [
+            path for path in target_note_paths if path not in note_indices
+        ]
+        if missing_paths:
             raise ValueError(
-                "Target note is not available in the current scope: "
-                f"{target_note_path}"
+                "Selected note is not available in the current scope: "
+                f"{missing_paths[0]}"
             )
-        target_neighbours = neighbours[target_index]
+        target_indices = [note_indices[path] for path in target_note_paths]
         return {
-            "note_count": 1,
-            "notes_to_modify": int(bool(target_neighbours)),
-            "link_count": len(target_neighbours),
+            "note_count": len(target_indices),
+            "notes_to_modify": sum(1 for idx in target_indices if neighbours[idx]),
+            "link_count": sum(len(neighbours[idx]) for idx in target_indices),
         }
 
     return {

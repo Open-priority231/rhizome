@@ -67,7 +67,7 @@ def test_dry_run_env_calls_run_pipeline_backup_not_confirmed():
     mock_run.assert_called_once_with(
         settings,
         backup_confirmed=False,
-        target_note_path=None,
+        target_note_paths=None,
         related_notes_header="## Related Notes",
     )
 
@@ -118,7 +118,7 @@ def test_yes_flag_calls_run_pipeline_with_backup_confirmed():
     mock_run.assert_called_once_with(
         settings,
         backup_confirmed=True,
-        target_note_path=None,
+        target_note_paths=None,
         related_notes_header="## Related Notes",
     )
 
@@ -137,7 +137,7 @@ def test_short_yes_flag():
     mock_run.assert_called_once_with(
         settings,
         backup_confirmed=True,
-        target_note_path=None,
+        target_note_paths=None,
         related_notes_header="## Related Notes",
     )
 

@@ -111,6 +111,7 @@ All settings are read from environment variables or a `.env` file.
 | `MODEL_NAME`           | `Xenova/paraphrase-multilingual-MiniLM-L12-v2`  | HuggingFace model identifier (Xenova ONNX exports). If you change this, clear `MODEL_DIR` first to avoid stale cache. |
 | `LOG_DIR`              | `./logs`                                         | Directory where per-run JSON logs are written        |
 | `DRY_RUN`              | `false`                                          | Preview proposed links without modifying any files   |
+| `MANUAL_OVERRIDE_FIELDS` | `top_k,similarity_threshold,chunk_size,chunk_overlap,related_notes_header` | Comma-separated list of runtime prompts to show in `rhizome run --manual`. Accepts `top_k`, `similarity_threshold`, `chunk_size`, `chunk_overlap`, `related_notes_header`, plus aliases `threshold` and `header`. |
 | `EXCLUDE_DIRS`         | *(empty)*                                        | Comma-separated list of directories (relative to `VAULT_PATH`) to skip. Uses prefix matching: `journal` excludes `vault/journal/` but not `vault/project/journal/`. |
 | `INCLUDE_DIRS`         | *(empty)*                                        | Comma-separated whitelist of directories to scan exclusively. When set, only files under these paths are processed. `EXCLUDE_DIRS` is applied afterwards, so you can narrow within the whitelist (e.g. `INCLUDE_DIRS=projects` + `EXCLUDE_DIRS=projects/drafts`). Leave empty to process the entire vault. |
 | `CHUNK_SIZE`           | `512`                                            | Maximum tokens per chunk when embedding long notes. Notes exceeding this limit are split into overlapping windows and their embeddings averaged into one vector. Set to `0` to disable chunking (notes truncated at 512 tokens). |
@@ -161,8 +162,9 @@ and notes on compatibility requirements.
 ```
 rhizome run              Execute the full pipeline (dry-run preview + confirmation)
 rhizome run --yes        Skip confirmation and auto-confirm backup (CI / scripted)
+rhizome run --manual     Interactively choose one or more notes to update while matching against the full vault
 rhizome run --single-note
-                         Interactively choose one note to update while matching against the full vault
+                         Deprecated alias for --manual
 rhizome audit            Analyze vault connectivity without modifying any file
 rhizome status           Show vault stats and model cache status
 rhizome clean            Remove all generated ## Related Notes sections
@@ -210,16 +212,25 @@ For fully non-interactive execution (CI / scripts):
 rhizome run --yes        # skip all prompts, auto-confirm backup
 ```
 
-To update just one note interactively while still comparing it against the full
-vault:
+To update one or more notes interactively while still comparing them against the
+full vault:
 
 ```bash
-rhizome run --single-note
+rhizome run --manual
 ```
 
-Rhizome will ask you to search by filename, pick the target note, and optionally
-override `TOP_K`, `SIMILARITY_THRESHOLD`, `CHUNK_SIZE`, `CHUNK_OVERLAP`, and the
-generated section header for that run only. The `.env` file remains unchanged.
+Rhizome will ask you to search by filename or path, add notes to a manual target
+list, and optionally override the runtime settings configured in
+`MANUAL_OVERRIDE_FIELDS` for that run only. The `.env` file remains unchanged.
+
+For example, if you usually only tweak the threshold:
+
+```bash
+MANUAL_OVERRIDE_FIELDS=similarity_threshold
+```
+
+`--single-note` still works as a compatibility alias for now, but `--manual` is
+the preferred flag.
 
 To preview proposed links without writing anything at all (no prompt):
 
