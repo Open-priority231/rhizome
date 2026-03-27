@@ -283,24 +283,6 @@ def test_manual_can_override_header_for_one_run(tmp_path: Path) -> None:
     assert "RELATED_NOTES_HEADER" in result.output
 
 
-def test_single_note_alias_warns_and_still_works(tmp_path: Path) -> None:
-    (tmp_path / "Alpha.md").write_text("# Alpha\nBody")
-    settings = _build_settings(tmp_path)
-
-    with (
-        patch("rhizome.config.load_settings", return_value=settings),
-        patch(
-            "rhizome.pipeline.preview_pipeline",
-            return_value={"notes_to_modify": 1, "link_count": 1},
-        ),
-        patch("rhizome.pipeline.run_pipeline"),
-    ):
-        result = runner.invoke(app, ["run", "--single-note"], input="alp\n1\nn\n\nn\n")
-
-    assert result.exit_code == 0, result.output
-    assert "--single-note is deprecated" in result.output
-
-
 def test_manual_dry_run_still_selects_target(tmp_path: Path) -> None:
     (tmp_path / "Alpha.md").write_text("# Alpha\nBody")
     settings = _build_settings(tmp_path, dry_run=True)

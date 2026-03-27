@@ -163,8 +163,6 @@ and notes on compatibility requirements.
 rhizome run              Execute the full pipeline (dry-run preview + confirmation)
 rhizome run --yes        Skip confirmation and auto-confirm backup (CI / scripted)
 rhizome run --manual     Interactively choose one or more notes to update while matching against the full vault
-rhizome run --single-note
-                         Deprecated alias for --manual
 rhizome audit            Analyze vault connectivity without modifying any file
 rhizome status           Show vault stats and model cache status
 rhizome clean            Remove all generated ## Related Notes sections
@@ -228,9 +226,6 @@ For example, if you usually only tweak the threshold:
 ```bash
 MANUAL_OVERRIDE_FIELDS=similarity_threshold
 ```
-
-`--single-note` still works as a compatibility alias for now, but `--manual` is
-the preferred flag.
 
 To preview proposed links without writing anything at all (no prompt):
 

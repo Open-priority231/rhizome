@@ -308,11 +308,6 @@ def run(
             "against the full vault."
         ),
     ),
-    single_note: bool = typer.Option(
-        False,
-        "--single-note",
-        help="Deprecated alias for --manual.",
-    ),
 ) -> None:
     """
     Execute the full semantic linking pipeline.
@@ -329,9 +324,7 @@ def run(
     from rhizome.pipeline import preview_pipeline, run_pipeline
     from rhizome.vault import discover_notes
 
-    manual_mode = manual or single_note
-
-    if manual_mode and yes:
+    if manual and yes:
         raise typer.BadParameter(
             "--manual cannot be used with --yes because note selection is interactive.",
             param_hint="--manual",
@@ -345,9 +338,7 @@ def run(
 
     target_note_paths: list[Path] = []
     related_notes_header = RELATED_NOTES_HEADER
-    if manual_mode:
-        if single_note and not manual:
-            typer.echo("Note: --single-note is deprecated; use --manual instead.")
+    if manual:
         target_note_paths = _prompt_manual_targets(settings)
         settings, related_notes_header = _prompt_runtime_overrides(
             settings,
