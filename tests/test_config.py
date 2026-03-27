@@ -6,7 +6,7 @@ levels and the similarity_level property.
 import pytest
 from pydantic import ValidationError
 
-from rhizome.config import Settings
+from rhizome.config import _DEFAULT_MANUAL_OVERRIDE_FIELDS, Settings
 
 
 @pytest.fixture()
@@ -195,7 +195,7 @@ def test_chunk_overlap_zero_is_valid(vault):
 
 
 def test_manual_override_fields_default(vault):
-    s = Settings(vault_path=vault)
+    s = Settings(vault_path=vault, manual_override_fields=_DEFAULT_MANUAL_OVERRIDE_FIELDS)
     assert s.manual_override_fields == [
         "top_k",
         "similarity_threshold",

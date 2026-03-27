@@ -27,6 +27,13 @@ def _build_settings(vault: Path, **updates) -> Settings:
         "include_dirs": [],
         "chunk_size": 512,
         "chunk_overlap": 32,
+        "manual_override_fields": [
+            "top_k",
+            "similarity_threshold",
+            "chunk_size",
+            "chunk_overlap",
+            "related_notes_header",
+        ],
     }
     data.update(updates)
     return Settings.model_validate(data)
@@ -77,6 +84,9 @@ def test_manual_run_prompts_for_search_and_selection(tmp_path: Path) -> None:
     run_args = mock_run.call_args.kwargs
     assert run_args["target_note_paths"] == [tmp_path / "Alpha.md"]
     assert run_args["related_notes_header"] == "## Related Notes"
+    assert "Matching notes" in result.output
+    assert "Selected notes" in result.output
+    assert "Added: Alpha.md" in result.output
     assert "Manual targets" in result.output
     assert "Notes selected" in result.output
 
@@ -99,7 +109,7 @@ def test_manual_run_handles_no_match_and_invalid_selection(tmp_path: Path) -> No
             input="zzz\nalp\n9\n1\nn\n\nn\n",
         )
 
-    assert "No notes matched" in result.output
+    assert 'No notes matched "zzz". Try again.' in result.output
     assert "Invalid selection: 9" in result.output
     assert "Aborted." in result.output
     mock_run.assert_not_called()
@@ -110,18 +120,17 @@ def test_manual_lists_relative_paths_for_duplicate_names(tmp_path: Path) -> None
     (tmp_path / "areas").mkdir()
     (tmp_path / "projects" / "Plan.md").write_text("# Plan\nProjects")
     (tmp_path / "areas" / "Plan.md").write_text("# Plan\nAreas")
-    settings = _build_settings(tmp_path)
+    settings = _build_settings(tmp_path, dry_run=True)
 
     with (
         patch("rhizome.config.load_settings", return_value=settings),
-        patch(
-            "rhizome.pipeline.preview_pipeline",
-            return_value={"notes_to_modify": 1, "link_count": 1},
-        ),
+        patch("rhizome.pipeline.preview_pipeline") as mock_preview,
         patch("rhizome.pipeline.run_pipeline"),
     ):
-        result = runner.invoke(app, ["run", "--manual"], input="plan\n1\nn\n\nn\n")
+        result = runner.invoke(app, ["run", "--manual"], input="plan\n1\nn\n\n")
 
+    assert result.exit_code == 0, result.output
+    mock_preview.assert_not_called()
     assert "projects\\Plan.md" in result.output or "projects/Plan.md" in result.output
     assert "areas\\Plan.md" in result.output or "areas/Plan.md" in result.output
 
@@ -242,6 +251,7 @@ def test_manual_respects_configured_override_fields(tmp_path: Path) -> None:
     assert tuned_settings.chunk_size == 512
     assert tuned_settings.chunk_overlap == 32
     assert "SIMILARITY_THRESHOLD" in result.output
+    assert "medium (0.75)" in result.output
     assert "TOP_K" not in result.output
     assert "CHUNK_SIZE" not in result.output
     assert "CHUNK_OVERLAP" not in result.output

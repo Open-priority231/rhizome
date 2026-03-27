@@ -6,9 +6,10 @@ a missing or malformed VAULT_PATH fails fast rather than crashing mid-run.
 """
 
 from pathlib import Path
+from typing import Annotated
 
 from pydantic import field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 # Named presets for SIMILARITY_THRESHOLD.
 # Users may write SIMILARITY_THRESHOLD=medium instead of SIMILARITY_THRESHOLD=0.75.
@@ -59,7 +60,9 @@ class Settings(BaseSettings):
     include_dirs: list[str] = []
     chunk_size: int = 512
     chunk_overlap: int = 32
-    manual_override_fields: list[str] = _DEFAULT_MANUAL_OVERRIDE_FIELDS.copy()
+    manual_override_fields: Annotated[list[str], NoDecode] = (
+        _DEFAULT_MANUAL_OVERRIDE_FIELDS.copy()
+    )
 
     @field_validator("exclude_dirs", mode="before")
     @classmethod
