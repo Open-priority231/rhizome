@@ -24,6 +24,8 @@ def _mock_settings(*, dry_run: bool = False, vault_path: Path | None = None) -> 
     s.top_k = 5
     s.vault_path = vault_path or Path("/fake/vault")
     s.vault_app = "obsidian"
+    s.exclude_dirs = []
+    s.include_dirs = []
     return s
 
 

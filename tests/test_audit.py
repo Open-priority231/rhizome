@@ -46,6 +46,8 @@ def _mock_settings(vault: Path) -> MagicMock:
     s.top_k = 2
     s.model_dir = vault / "models"
     s.model_name = "Xenova/test-model"
+    s.exclude_dirs = []
+    s.include_dirs = []
     return s
 
 
