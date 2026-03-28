@@ -16,6 +16,7 @@ runner = CliRunner()
 
 def _normalize_cli_output(text: str) -> str:
     text = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text)
+    text = re.sub(r"[╭╮╰╯─│]", " ", text)
     return " ".join(text.split())
 
 
