@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -11,6 +12,11 @@ from rhizome.pipeline import preview_pipeline, run_pipeline
 from rhizome.vault import RHIZOME_START
 
 runner = CliRunner()
+
+
+def _normalize_cli_output(text: str) -> str:
+    text = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text)
+    return " ".join(text.split())
 
 
 def _build_settings(vault: Path, **updates) -> Settings:
@@ -60,7 +66,8 @@ def test_manual_flag_rejects_yes(tmp_path: Path) -> None:
         result = runner.invoke(app, ["run", "--manual", "--yes"])
 
     assert result.exit_code != 0
-    assert "--manual cannot be used with --yes" in result.output
+    output = _normalize_cli_output(result.output)
+    assert "--manual cannot be used with --yes because note selection is interactive." in output
 
 
 def test_manual_run_prompts_for_search_and_selection(tmp_path: Path) -> None:

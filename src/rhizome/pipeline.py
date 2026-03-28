@@ -45,6 +45,16 @@ def run_pipeline(
     *backup_confirmed* signals that the caller has already obtained user consent
     for a backup (or that no backup is needed, e.g. DRY_RUN).  The pipeline
     never prompts interactively — that responsibility belongs to cli/commands.py.
+
+    *target_note_paths* optionally narrows the final write pass to a selected
+    subset of discovered notes. Parsing, embedding, indexing, and neighbour
+    lookup still run across the full discovered vault so selected notes keep
+    matching against every in-scope note. Run logs and totals reflect only the
+    targeted subset when this parameter is provided.
+
+    *related_notes_header* controls the markdown heading written inside the
+    managed related-links block for this run. The block remains sentinel-wrapped
+    so replacement and cleanup stay idempotent even when the header text changes.
     """
     run_start = datetime.now(tz=timezone.utc)
 
@@ -195,9 +205,15 @@ def preview_pipeline(
     Dry-run pass: compute what run_pipeline would do without writing anything.
 
     Returns:
-        note_count       -- total notes discovered
-        notes_to_modify  -- notes that would receive a Related Notes section
+        note_count       -- total notes discovered, or selected notes when
+                            *target_note_paths* is provided
+        notes_to_modify  -- notes that would receive a managed related-links
+                            section within the active scope
         link_count       -- total wikilinks that would be written
+
+    Like run_pipeline(), discovery, parsing, embedding, and matching still run
+    across the full discovered vault. *target_note_paths* only narrows which
+    notes contribute to the returned counts.
     """
     md_paths = discover_notes(settings.vault_path, settings.exclude_dirs, settings.include_dirs)
     if not md_paths:
